@@ -5,7 +5,7 @@ cd /d "%~dp0"
 if not exist ".venv\Scripts\python.exe" (
   echo Setting up Python environment - first run only...
   python -m venv .venv || goto :error
-  ".venv\Scripts\python.exe" -m pip install -r requirements.txt "uvicorn[standard]" || goto :error
+  ".venv\Scripts\python.exe" -m pip install -r api\requirements.txt "uvicorn[standard]" || goto :error
 )
 
 if not exist "frontend\dist\index.html" (

@@ -25,9 +25,9 @@ DEFAULT_FALLBACKS = "gemini-3.5-flash,gemini-3.1-flash-lite,gemini-3.5-flash-lit
 REQUEST_TIMEOUT = 120.0
 MAX_ATTEMPTS = 2  # per model
 RETRYABLE = (429, 500, 502, 503, 504)
-# Vercel's free plan stops a request after ~60 s, so each resume gets a time
+# Vercel's free plan stops a request after 300 s, so each resume gets a time
 # budget there; locally there is no such limit.
-DEADLINE_SECONDS = float(os.environ.get("EXTRACT_DEADLINE_SECONDS") or (50 if os.environ.get("VERCEL") else 600))
+DEADLINE_SECONDS = float(os.environ.get("EXTRACT_DEADLINE_SECONDS") or (240 if os.environ.get("VERCEL") else 600))
 
 PROMPT = """You are reading ONE candidate resume. Extract facts exactly as written.
 
