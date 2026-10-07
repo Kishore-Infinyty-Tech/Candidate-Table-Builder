@@ -11,10 +11,21 @@ client-ready **Excel table**.
 
 ## Run locally (Windows)
 
-1. Install [Python 3.11+](https://www.python.org/downloads/) and [Node.js 20+](https://nodejs.org/).
-2. Copy `.env.example` to `.env` and put your Gemini API key in it.
-3. Double-click **`start.bat`**. The first run installs everything; then the
-   dashboard opens at <http://localhost:8000>.
+1. Get the code: on GitHub click **Code → Download ZIP** and unzip it
+   (do not copy `.venv` or `node_modules` from another computer).
+2. Double-click **`start.bat`**. On the first run it:
+   - installs Python and Node.js if they are missing (Windows may ask for
+     permission — click **Yes**),
+   - installs the packages and builds the dashboard (a few minutes, needs internet),
+   - asks for your Gemini API key (free at <https://aistudio.google.com/apikey>)
+     and saves it in `.env`.
+3. The dashboard opens at <http://localhost:8000>. Keep the black window open
+   while using it; close it to stop the app.
+
+Next time, double-clicking `start.bat` starts the app in a few seconds.
+If automatic installation is not possible, install
+[Python 3.11+](https://www.python.org/downloads/) (tick **Add python.exe to PATH**)
+and [Node.js LTS](https://nodejs.org/), then run `start.bat` again.
 
 ### Developer mode (hot reload)
 
