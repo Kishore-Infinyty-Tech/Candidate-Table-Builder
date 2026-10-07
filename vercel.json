@@ -4,7 +4,10 @@
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/dist",
   "functions": {
-    "api/index.py": { "maxDuration": 60 }
+    "api/index.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{frontend/**,.venv/**,**/node_modules/**,**/__pycache__/**}"
+    }
   },
   "rewrites": [{ "source": "/api/(.*)", "destination": "/api/index" }]
 }

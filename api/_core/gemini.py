@@ -7,6 +7,7 @@ calculations happen in code so the output stays consistent.
 from __future__ import annotations
 
 import asyncio
+import time
 import json
 import os
 import random
@@ -24,6 +25,9 @@ DEFAULT_FALLBACKS = "gemini-3.5-flash,gemini-3.1-flash-lite,gemini-3.5-flash-lit
 REQUEST_TIMEOUT = 120.0
 MAX_ATTEMPTS = 2  # per model
 RETRYABLE = (429, 500, 502, 503, 504)
+# Vercel's free plan stops a request after ~60 s, so each resume gets a time
+# budget there; locally there is no such limit.
+DEADLINE_SECONDS = float(os.environ.get("EXTRACT_DEADLINE_SECONDS") or (50 if os.environ.get("VERCEL") else 600))
 
 PROMPT = """You are reading ONE candidate resume. Extract facts exactly as written.
 
@@ -192,16 +196,20 @@ async def extract_resume(
     # Try the main model first; if it stays overloaded, move to the fallback models.
     last_error = "Daily free Gemini limit reached on all models. Try again after the daily reset."
     used_up_today = usage.exhausted_models()
+    deadline = time.monotonic() + DEADLINE_SECONDS
     for model in _models():
         if model in used_up_today:
             continue  # Google already said this model is done for today
         url = API_URL.format(model=model)
         for attempt in range(MAX_ATTEMPTS):
+            remaining = deadline - time.monotonic()
+            if remaining < 5:
+                raise ExtractionError(f"Gemini is slow right now and this resume timed out ({last_error}). Please run it again.")
             try:
-                resp = await client.post(url, headers=headers, json=body, timeout=REQUEST_TIMEOUT)
+                resp = await client.post(url, headers=headers, json=body, timeout=min(REQUEST_TIMEOUT, remaining))
             except httpx.HTTPError as exc:
                 last_error = f"Network problem reaching Gemini ({type(exc).__name__}). Check the internet connection."
-                await asyncio.sleep(2 ** attempt + random.random())
+                await asyncio.sleep(min(2 ** attempt + random.random(), max(0, deadline - time.monotonic() - 5)))
                 continue
 
             if resp.status_code == 200:
@@ -221,7 +229,7 @@ async def extract_resume(
                 last_error = "Daily free Gemini limit reached on all models. Try again after the daily reset."
                 break  # this model is done for today, move to the next one
             if resp.status_code in RETRYABLE:
-                await asyncio.sleep(_retry_delay(resp, attempt))
+                await asyncio.sleep(min(_retry_delay(resp, attempt), max(0, deadline - time.monotonic() - 5)))
                 continue
             if resp.status_code == 404:
                 break  # model not available on this key, try the next one

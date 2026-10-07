@@ -31,7 +31,9 @@ DEFAULT_LIMITS = {
 }
 
 _LOCK = threading.Lock()
-_FILE = Path(__file__).resolve().parents[2] / ".usage.json"
+# Vercel's project folder is read-only; /tmp is writable but only lasts while
+# the server instance stays warm (use Upstash there for a reliable count).
+_FILE = Path("/tmp/.usage.json") if os.environ.get("VERCEL") else Path(__file__).resolve().parents[2] / ".usage.json"
 
 
 # ------------------------------------------------------------- quota day
