@@ -1,0 +1,27 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# node
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# local data
+samples/
+*.xlsx
+!frontend/public/*.xlsx
+
+# misc
+.vercel
+.DS_Store
+
+# local Gemini usage counter
+.usage.json
