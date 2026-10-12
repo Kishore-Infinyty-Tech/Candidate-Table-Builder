@@ -213,3 +213,136 @@ body {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ------------------------------------------------------------ verify panel */
+
+.verify-backdrop { animation: fade-in 0.25s ease both; }
+.verify-panel { animation: panel-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.verify-out .verify-backdrop { animation: fade-out 0.18s ease both; }
+.verify-out .verify-panel { animation: panel-out 0.18s ease both; }
+
+.nav-btn {
+  display: inline-flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.nav-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.22); transform: translateY(-1px); }
+.nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.kbd {
+  display: inline-block;
+  min-width: 1.4rem;
+  border-radius: 0.4rem;
+  border: 1px solid #dbe3f3;
+  border-bottom-width: 2px;
+  background: #fff;
+  padding: 0 0.35rem;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #163a9c;
+}
+
+.viewer-bg {
+  background:
+    radial-gradient(rgba(10, 26, 79, 0.06) 1px, transparent 1px) 0 0 / 18px 18px,
+    linear-gradient(180deg, #eef2fb, #e7ecf8);
+}
+
+.pdf-page,
+.docx-page {
+  position: relative;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(10, 26, 79, 0.08), 0 18px 40px -18px rgba(10, 26, 79, 0.35);
+}
+.pdf-page canvas { display: block; border-radius: 6px; }
+
+.docx-page {
+  width: min(100%, 820px);
+  padding: 56px 64px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #1e293b;
+}
+.docx-page p { margin: 0 0 0.45em; }
+.docx-page h1, .docx-page h2, .docx-page h3 { font-weight: 700; margin: 0.8em 0 0.3em; color: #0a1a4f; }
+.docx-page table { width: 100%; border-collapse: collapse; margin: 0.4em 0; }
+.docx-page td { border: 1px solid #e2e8f0; padding: 4px 8px; vertical-align: top; }
+.docx-page ul { padding-left: 1.2em; list-style: disc; }
+
+/* pdf.js text layer (subset of pdf_viewer.css) */
+.textLayer {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  line-height: 1;
+  text-align: initial;
+  transform-origin: 0 0;
+  z-index: 1;
+}
+.textLayer :is(span, br) {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+.textLayer span.markedContent { top: 0; height: 0; }
+
+/* highlights */
+.textLayer .hl,
+.docx-page mark.hl {
+  background: rgba(249, 199, 79, 0.42);
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(245, 184, 46, 0.35);
+}
+.docx-page mark.hl { color: inherit; padding: 0 1px; }
+.textLayer .hl-focus,
+.docx-page mark.hl-focus {
+  background: rgba(47, 107, 255, 0.28);
+  box-shadow: 0 0 0 2px rgba(47, 107, 255, 0.75);
+  animation: locate 1.4s ease-out 2;
+}
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes panel-out { to { opacity: 0; transform: translateY(10px) scale(0.99); } }
+@keyframes locate {
+  0% { box-shadow: 0 0 0 2px rgba(47, 107, 255, 0.75), 0 0 0 0 rgba(47, 107, 255, 0.45); }
+  70% { box-shadow: 0 0 0 2px rgba(47, 107, 255, 0.75), 0 0 0 10px rgba(47, 107, 255, 0); }
+  100% { box-shadow: 0 0 0 2px rgba(47, 107, 255, 0.75), 0 0 0 0 rgba(47, 107, 255, 0); }
+}
+
+/* tracker cell located from a card: cyan outline + pulse */
+.tracker-cell.cell-focus {
+  position: relative;
+  background: rgba(34, 195, 243, 0.14) !important;
+  box-shadow: inset 0 0 0 3px #22c3f3;
+  animation: cell-locate 1.3s ease-out 2;
+}
+@keyframes cell-locate {
+  0% { box-shadow: inset 0 0 0 3px #22c3f3, 0 0 0 0 rgba(34, 195, 243, 0.45); }
+  70% { box-shadow: inset 0 0 0 3px #22c3f3, 0 0 0 8px rgba(34, 195, 243, 0); }
+  100% { box-shadow: inset 0 0 0 3px #22c3f3, 0 0 0 0 rgba(34, 195, 243, 0); }
+}
+
+/* tracker cells taken into the output: thick dark indigo frame */
+.tracker-cell.used-cell {
+  background: rgba(255, 217, 119, 0.4);
+  box-shadow: inset 0 0 0 3px #163a9c;
+}
+.tracker-cell.used-cell.cell-focus {
+  box-shadow: inset 0 0 0 3px #22c3f3;
+}

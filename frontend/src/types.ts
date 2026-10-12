@@ -17,6 +17,8 @@ export interface TrackerInfo {
   sheet: string;
   headers: string[];
   rows: string[][];
+  /** Excel row number of each tracker row (for "row 5, column E" references). */
+  row_numbers: number[];
   mapping: Mapping;
   fields: Record<FieldKey, string>;
   required: FieldKey[];
@@ -41,8 +43,19 @@ export interface ResumeJob {
 
 export type RowStatus = "matched" | "check" | "unmatched" | "failed";
 
+export interface MatchInfo {
+  tracker_row: number;
+  phone: boolean;
+  email: boolean;
+  name: number;
+}
+
 export interface TableRow {
   id: string;
+  /** Index into TrackerInfo.rows, or null when no tracker row was matched. */
+  tracker_row: number | null;
+  match: MatchInfo | null;
+  verified: boolean;
   source: string;
   read_mode: ReadMode | null;
   status: RowStatus;

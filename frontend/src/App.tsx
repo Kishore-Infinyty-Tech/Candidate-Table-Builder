@@ -3,6 +3,7 @@ import type { Mapping, ResumeJob, TableResult, TrackerInfo, UsageSummary } from 
 import { buildTable, exportExcel, extractBatch, fetchUsage } from "./lib/api";
 import { fileStem, readResume } from "./lib/readFile";
 import { PACED_INTERVAL_MS, planBatches } from "./lib/batches";
+import { AUDIT_COLUMNS, auditRows } from "./lib/audit";
 import UploadStep from "./components/UploadStep";
 import ProcessStep, { type RunState } from "./components/ProcessStep";
 import ReviewStep from "./components/ReviewStep";
@@ -151,7 +152,8 @@ export default function App() {
     setDownloading(true);
     setError(null);
     try {
-      const blob = await exportExcel(table.columns, table.rows);
+      const audit = { columns: AUDIT_COLUMNS, rows: auditRows(table.rows, jobs, tracker, mapping) };
+      const blob = await exportExcel(table.columns, table.rows, audit);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -262,7 +264,16 @@ export default function App() {
         )}
 
         {step === "review" && table && (
-          <ReviewStep table={table} setTable={setTable} onDownload={download} downloading={downloading} onRestart={restart} />
+          <ReviewStep
+            table={table}
+            setTable={setTable}
+            onDownload={download}
+            downloading={downloading}
+            onRestart={restart}
+            jobs={jobs}
+            tracker={tracker}
+            mapping={mapping}
+          />
         )}
       </main>
 

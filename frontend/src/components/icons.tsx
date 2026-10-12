@@ -50,3 +50,4 @@ export const IconFilter = make(<path d="M22 3H2l8 9.5V19l4 2v-8.5z" />);
 export const IconEdit = make(<><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></>);
 export const IconZap = make(<path d="M13 2 3 14h9l-1 8 10-12h-9z" />);
 export const IconLoader = make(<path d="M12 3a9 9 0 1 0 9 9" />);
+export const IconEye = make(<><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></>);

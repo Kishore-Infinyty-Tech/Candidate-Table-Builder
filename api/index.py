@@ -78,11 +78,13 @@ class BuildRequest(BaseModel):
 class ExportRow(BaseModel):
     values: dict[str, str]
     highlight: bool = False
+    audit: dict[str, str] | None = None
 
 
 class ExportRequest(BaseModel):
     columns: list[str]
     rows: list[ExportRow]
+    audit_columns: list[str] | None = None
 
 
 # ------------------------------------------------------------------ routes
@@ -144,7 +146,7 @@ def build_table(req: BuildRequest) -> dict[str, Any]:
 
 @app.post("/api/export")
 def export(req: ExportRequest) -> Response:
-    content = excel.build_workbook(req.columns, [r.model_dump() for r in req.rows])
+    content = excel.build_workbook(req.columns, [r.model_dump() for r in req.rows], req.audit_columns)
     return Response(
         content=content,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

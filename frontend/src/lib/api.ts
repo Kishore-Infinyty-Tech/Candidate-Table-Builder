@@ -67,20 +67,29 @@ export async function buildTable(jobs: ResumeJob[], tracker: TrackerInfo, mappin
   const body = await res.json();
   return {
     columns: body.columns,
-    rows: body.rows.map((r: Omit<TableRow, "highlight">) => ({
+    rows: body.rows.map((r: Omit<TableRow, "highlight" | "verified">) => ({
       ...r,
       highlight: r.status === "unmatched" || r.status === "failed",
+      verified: false,
+      // Older servers did not send tracker_row; the match details carry the same index.
+      tracker_row: typeof r.tracker_row === "number" ? r.tracker_row : typeof r.match?.tracker_row === "number" ? r.match.tracker_row : null,
+      match: r.match ?? null,
     })),
   };
 }
 
-export async function exportExcel(columns: string[], rows: TableRow[]): Promise<Blob> {
+export async function exportExcel(
+  columns: string[],
+  rows: TableRow[],
+  audit?: { columns: string[]; rows: Record<string, string>[] },
+): Promise<Blob> {
   const res = await fetch("/api/export", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       columns,
-      rows: rows.map((r) => ({ values: r.values, highlight: r.highlight })),
+      rows: rows.map((r, i) => ({ values: r.values, highlight: r.highlight, audit: audit?.rows[i] ?? null })),
+      audit_columns: audit?.columns ?? null,
     }),
   });
   if (!res.ok) throw new Error(await errorText(res));

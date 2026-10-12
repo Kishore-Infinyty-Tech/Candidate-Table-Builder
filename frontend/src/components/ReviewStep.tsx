@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import type { RowStatus, TableResult, TableRow } from "../types";
+import type { Mapping, ResumeJob, RowStatus, TableResult, TableRow, TrackerInfo } from "../types";
+import VerifyPanel from "./VerifyPanel";
 import { Alert, Avatar, Badge, Button } from "./ui";
 import {
   IconAlert, IconCheckCircle, IconDownload, IconEdit, IconFileText, IconImage, IconLoader,
-  IconRefresh, IconSparkles, IconTrash, IconXCircle,
+  IconCheck, IconEye, IconRefresh, IconShield, IconSparkles, IconTrash, IconXCircle,
 } from "./icons";
 
 const STATUS: Record<RowStatus, { label: string; tone: "green" | "amber" | "red"; icon: ReactNode; card: string }> = {
@@ -77,14 +78,23 @@ function Confetti() {
   );
 }
 
-export default function ReviewStep({ table, setTable, onDownload, downloading, onRestart }: {
+export default function ReviewStep({ table, setTable, onDownload, downloading, onRestart, jobs, tracker, mapping }: {
   table: TableResult;
   setTable: (t: TableResult) => void;
   onDownload: () => void;
   downloading: boolean;
   onRestart: () => void;
+  jobs: ResumeJob[];
+  tracker: TrackerInfo | null;
+  mapping: Mapping | null;
 }) {
   const [filter, setFilter] = useState<"all" | "issues">("all");
+  const [verifyAt, setVerifyAt] = useState<number | null>(null);
+  const verifiedCount = table.rows.filter((r) => r.verified).length;
+  const openVerify = (id?: string) => {
+    const i = id ? table.rows.findIndex((r) => r.id === id) : Math.max(0, table.rows.findIndex((r) => !r.verified));
+    setVerifyAt(i < 0 ? 0 : i);
+  };
 
   const counts = useMemo(() => {
     const c: Record<RowStatus, number> = { matched: 0, check: 0, unmatched: 0, failed: 0 };
@@ -123,6 +133,17 @@ export default function ReviewStep({ table, setTable, onDownload, downloading, o
           </div>
         </div>
         <div className="relative flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => openVerify()}
+            disabled={!table.rows.length}
+            className="group inline-flex items-center gap-2.5 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-navy-900 shadow-lg shadow-navy-950/20 transition hover:-translate-y-px"
+          >
+            <IconShield size={17} className="text-brand-500" />
+            {verifiedCount === table.rows.length && table.rows.length ? "All verified" : verifiedCount ? "Continue verifying" : "Verify candidates"}
+            <span className="rounded-full bg-navy-900/5 px-2 py-0.5 text-xs font-bold tabular-nums text-navy-700">
+              {verifiedCount}/{table.rows.length}
+            </span>
+          </button>
           <button
             onClick={onRestart}
             className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold ring-1 ring-white/25 transition hover:bg-white/20"
@@ -209,12 +230,22 @@ export default function ReviewStep({ table, setTable, onDownload, downloading, o
                         <div className="flex items-center gap-2.5">
                           <Avatar name={row.values["Name"] || "?"} size={30} />
                           <div className="min-w-0 flex-1">
-                            <Badge tone={STATUS[row.status].tone}>{STATUS[row.status].label}</Badge>
+                            <span className="flex flex-wrap items-center gap-1">
+                              <Badge tone={STATUS[row.status].tone}>{STATUS[row.status].label}</Badge>
+                              {row.verified && <Badge tone="blue" icon={<IconCheck size={11} strokeWidth={3} />}>Verified</Badge>}
+                            </span>
                             <div className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500" title={row.source}>
                               {row.read_mode === "file" ? <IconImage size={12} /> : <IconFileText size={12} />}
                               <span className="truncate">{row.source}</span>
                             </div>
                           </div>
+                          <button
+                            className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2 py-1 text-xs font-bold text-brand-700 ring-1 ring-inset ring-brand-200 transition hover:bg-brand-500 hover:text-white"
+                            onClick={() => openVerify(row.id)}
+                            title="Compare this row with the resume and tracker"
+                          >
+                            <IconEye size={13} /> Verify
+                          </button>
                           <button
                             className="rounded-md p-1.5 text-slate-300 opacity-0 transition group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-600"
                             onClick={() => remove(row.id)}
@@ -277,6 +308,19 @@ export default function ReviewStep({ table, setTable, onDownload, downloading, o
           </div>
         </div>
       </section>
+
+      {verifyAt !== null && table.rows.length > 0 && (
+        <VerifyPanel
+          rows={table.rows}
+          index={Math.min(verifyAt, table.rows.length - 1)}
+          setIndex={setVerifyAt}
+          jobs={jobs}
+          tracker={tracker}
+          mapping={mapping}
+          onSetVerified={(id, verified) => update(id, { verified })}
+          onClose={() => setVerifyAt(null)}
+        />
+      )}
     </div>
   );
 }

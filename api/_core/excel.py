@@ -39,8 +39,46 @@ def _lines_needed(text: str, width: int) -> int:
     return sum(max(1, math.ceil(len(line) / usable)) for line in str(text).split("\n"))
 
 
-def build_workbook(columns: list[str], rows: list[dict[str, Any]]) -> bytes:
-    """rows: [{"values": {column: text}, "highlight": bool}]"""
+AUDIT_FILL = PatternFill("solid", fgColor="0A1A4F")
+AUDIT_OK_FILL = PatternFill("solid", fgColor="E8F6EE")
+AUDIT_LEFT = Alignment(horizontal="left", vertical="top", wrap_text=True)
+
+
+def _audit_sheet(wb: Workbook, columns: list[str], rows: list[dict[str, Any]]) -> None:
+    """Second sheet for the recruiter: where every value came from and who checked it.
+    The client sheet stays first and is not changed."""
+    ws = wb.create_sheet("Verification")
+    for ci, col in enumerate(columns, 1):
+        cell = ws.cell(row=1, column=ci, value=col)
+        cell.fill = AUDIT_FILL
+        cell.font = HEADER_FONT
+        cell.alignment = CENTER
+        cell.border = BORDER
+        width = 14 if len(col) < 14 else min(48, max(18, len(col) + 4))
+        if col in ("Notes", "Match evidence"):
+            width = 48
+        ws.column_dimensions[cell.column_letter].width = width
+    ws.row_dimensions[1].height = 32
+    for ri, row in enumerate(rows, 2):
+        audit = row.get("audit") or {}
+        verified = str(audit.get("Verified", "")).lower().startswith("yes")
+        tallest = 1
+        for ci, col in enumerate(columns, 1):
+            text = str(audit.get(col, "") or "")
+            cell = ws.cell(row=ri, column=ci, value=text)
+            cell.alignment = AUDIT_LEFT
+            cell.border = BORDER
+            cell.font = BODY_FONT
+            cell.number_format = "@"
+            if verified and col == "Verified":
+                cell.fill = AUDIT_OK_FILL
+            tallest = max(tallest, _lines_needed(text, int(ws.column_dimensions[cell.column_letter].width or 14)))
+        ws.row_dimensions[ri].height = LINE_HEIGHT * min(tallest, 12) + 6
+    ws.freeze_panes = "B2"
+
+
+def build_workbook(columns: list[str], rows: list[dict[str, Any]], audit_columns: list[str] | None = None) -> bytes:
+    """rows: [{"values": {column: text}, "highlight": bool, "audit": {column: text} | None}]"""
     wb = Workbook()
     ws = wb.active
     ws.title = "Candidates"
@@ -73,6 +111,9 @@ def build_workbook(columns: list[str], rows: list[dict[str, Any]]) -> bytes:
         ws.row_dimensions[ri].height = LINE_HEIGHT * tallest + 6
 
     ws.freeze_panes = "A2"
+    if audit_columns and any(r.get("audit") for r in rows):
+        _audit_sheet(wb, audit_columns, rows)
+    wb.active = 0
     buf = io.BytesIO()
     wb.save(buf)
     return buf.getvalue()

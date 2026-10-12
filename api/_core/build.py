@@ -226,6 +226,7 @@ def build_table(
         notes: list[str] = []
         values = _empty_row()
         row = None
+        tracker_idx: int | None = None
         status = "matched"
         match_info: dict[str, Any] | None = None
 
@@ -233,11 +234,13 @@ def build_table(
             status = "failed"
             notes.append(resume.get("error") or "Could not read this resume.")
             if ri in by_resume:
-                row = rows[by_resume[ri][0]]
+                tracker_idx = by_resume[ri][0]
+                row = rows[tracker_idx]
                 notes.append("Tracker details filled in; resume columns need to be added by hand.")
         elif ri in by_resume:
             ti, s = by_resume[ri]
             row = rows[ti]
+            tracker_idx = ti
             match_info = {"tracker_row": ti, **s}
             evidence = [k for k in ("phone", "email") if s[k]]
             if not evidence:
@@ -290,6 +293,7 @@ def build_table(
 
         out.append({
             "id": resume.get("id"),
+            "tracker_row": tracker_idx,
             "source": resume.get("filename"),
             "read_mode": resume.get("mode"),
             "status": status,
@@ -315,6 +319,7 @@ def build_table(
         tracker_part(row, values)
         out.append({
             "id": f"tracker-{ti}",
+            "tracker_row": ti,
             "source": "Tracker only",
             "read_mode": None,
             "status": "unmatched",

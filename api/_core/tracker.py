@@ -78,21 +78,26 @@ def read_tracker(data: bytes) -> dict[str, Any]:
     width = len(headers)
 
     body: list[list[str]] = []
-    for raw in rows[header_idx + 1 :]:
+    row_numbers: list[int] = []  # Excel row number of each kept row, for "row 5, column E" references
+    for offset, raw in enumerate(rows[header_idx + 1 :]):
         cells = [_cell_text(v) for v in (list(raw) + [None] * width)[:width]]
         if any(cells):
             body.append(cells)
+            row_numbers.append(header_idx + 2 + offset)
 
     mapping = detect_mapping(headers)
     # Drop rows with no candidate name (totals, notes, blank formatted rows).
     name_col = mapping.get("name")
     if name_col is not None:
-        body = [r for r in body if r[name_col]]
+        kept = [(r, n) for r, n in zip(body, row_numbers) if r[name_col]]
+        body = [r for r, _ in kept]
+        row_numbers = [n for _, n in kept]
 
     return {
         "sheet": ws.title,
         "headers": headers,
         "rows": body,
+        "row_numbers": row_numbers,
         "mapping": mapping,
         "fields": {k: v[0] for k, v in FIELDS.items()},
         "required": REQUIRED_FIELDS,
