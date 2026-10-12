@@ -4,7 +4,7 @@ import VerifyPanel from "./VerifyPanel";
 import { Alert, Avatar, Badge, Button } from "./ui";
 import {
   IconAlert, IconCheckCircle, IconDownload, IconEdit, IconFileText, IconImage, IconLoader,
-  IconCheck, IconEye, IconRefresh, IconShield, IconSparkles, IconTrash, IconXCircle,
+  IconCheck, IconClock, IconEye, IconRefresh, IconShield, IconSparkles, IconTrash, IconXCircle,
 } from "./icons";
 
 const STATUS: Record<RowStatus, { label: string; tone: "green" | "amber" | "red"; icon: ReactNode; card: string }> = {
@@ -78,12 +78,26 @@ function Confetti() {
   );
 }
 
-export default function ReviewStep({ table, setTable, onDownload, downloading, onRestart, jobs, tracker, mapping }: {
+/** 83000 -> "1 min 23 sec"; 9400 -> "9 sec" */
+function formatDuration(ms: number): string {
+  const total = Math.max(1, Math.round(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h) return `${h} hr ${m} min`;
+  if (m) return s ? `${m} min ${s} sec` : `${m} min`;
+  return `${s} sec`;
+}
+
+export default function ReviewStep({ table, setTable, onDownload, downloading, onRestart, jobs, tracker, mapping, elapsedMs, resumeCount }: {
   table: TableResult;
   setTable: (t: TableResult) => void;
   onDownload: () => void;
   downloading: boolean;
   onRestart: () => void;
+  /** Time the run took, or null if unknown. */
+  elapsedMs: number | null;
+  resumeCount: number;
   jobs: ResumeJob[];
   tracker: TrackerInfo | null;
   mapping: Mapping | null;
@@ -130,6 +144,18 @@ export default function ReviewStep({ table, setTable, onDownload, downloading, o
               {table.rows.length} candidates, sorted by experience.{" "}
               {allClear ? "Everything matched cleanly." : "A few rows need a quick look before you download."}
             </p>
+            {elapsedMs !== null && (
+              <p className="anim-rise mt-2 inline-flex flex-wrap items-center gap-x-2 gap-y-1 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-brand-100 ring-1 ring-white/15">
+                <IconClock size={13} className="text-gold-300" />
+                <span>
+                  Processed {resumeCount} {resumeCount === 1 ? "resume" : "resumes"} in{" "}
+                  <span className="font-display text-sm font-bold text-white">{formatDuration(elapsedMs)}</span>
+                </span>
+                {resumeCount > 1 && (
+                  <span className="text-brand-100/70">· about {formatDuration(elapsedMs / resumeCount)} each</span>
+                )}
+              </p>
+            )}
           </div>
         </div>
         <div className="relative flex flex-wrap items-center gap-3">

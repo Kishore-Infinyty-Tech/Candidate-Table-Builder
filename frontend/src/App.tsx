@@ -35,6 +35,8 @@ export default function App() {
   const [run, setRun] = useState<RunState>({ phase: "reading", batch: 0, totalBatches: 0, nextBatchAt: null });
   const [table, setTable] = useState<TableResult | null>(null);
   const [downloading, setDownloading] = useState(false);
+  /** How long the last run took (reading + Gemini + matching), in milliseconds. */
+  const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const cancelled = useRef(false);
   const [usage, setUsage] = useState<UsageSummary | null>(null);
@@ -74,6 +76,8 @@ export default function App() {
   const start = async () => {
     if (!tracker || !mapping) return;
     cancelled.current = false;
+    const startedAt = Date.now();
+    setElapsedMs(null);
     setError(null);
     setStep("process");
 
@@ -132,6 +136,7 @@ export default function App() {
       // 3. Match with the tracker and build the table.
       setRun({ phase: "building", batch: batches.length, totalBatches: batches.length, nextBatchAt: null, batchStart: Date.now() });
       const result = await buildTable(work, tracker, mapping);
+      setElapsedMs(Date.now() - startedAt);
       // Let the progress ring finish its sweep to 100% before showing the table.
       setRun({ phase: "done", batch: batches.length, totalBatches: batches.length, nextBatchAt: null });
       await wait(1900);
@@ -270,6 +275,8 @@ export default function App() {
             onDownload={download}
             downloading={downloading}
             onRestart={restart}
+            elapsedMs={elapsedMs}
+            resumeCount={jobs.length}
             jobs={jobs}
             tracker={tracker}
             mapping={mapping}
