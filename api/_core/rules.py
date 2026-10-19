@@ -100,7 +100,7 @@ def format_current_ctc(current: Any, variable: Any) -> str:
     if not current:
         return ""
     if is_empty(variable):
-        return f"{current} (All Fixed)"
+        return current  # no variable pay: just the fixed amount, e.g. "12.3 Lpa"
     return f"{current} (Fixed) + {_lpa(variable)} (Variable)"
 
 
@@ -110,20 +110,22 @@ _LWD = re.compile(r"\bLWD\b\s*[:\-]?\s*[^;|]*;?", re.I)
 
 
 def format_offer(offer: Any) -> str:
+    """Offer and joining date only. Returns "" when there is no offer."""
     text = _LWD.sub("", str(offer or ""))
     text = clean(text).strip(" ;,|")
     text = re.sub(r"\s*;\s*", "; ", text)
     if is_empty(text) or re.fullmatch(r"no\s*offers?\.?", text, re.I):
-        return "No Offers"
+        return ""
     return re.sub(r"\b(an?\s+offer)\s+of\s+", r"\1 ", text, flags=re.I)
 
 
 def format_notice_offer(notice: Any, offer: Any) -> str:
+    """"60 Days" with no offer; "14 Days | Have an offer 20 Lpa; DOJ: ..." with one."""
     notice = clean(notice)
     offer_text = format_offer(offer)
-    if not notice:
-        return offer_text
-    return f"{notice} | {offer_text}"
+    if notice and offer_text:
+        return f"{notice} | {offer_text}"
+    return notice or offer_text
 
 
 # ---------------------------------------------------------------- education

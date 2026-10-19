@@ -208,9 +208,9 @@ export function buildEvidence(row: TableRow, job: ResumeJob | undefined, tracker
       terms: [], cells: tc,
     });
   };
-  fromTracker("Current CTC (Fixed) + Any variable", ["current_ctc", "variable"], "Fixed + variable from the tracker (NA / No = All Fixed).");
+  fromTracker("Current CTC (Fixed) + Any variable", ["current_ctc", "variable"], "Fixed + variable from the tracker (no variable = fixed amount only).");
   fromTracker("Expected CTC (Fixed)", ["expected_ctc"], "Copied from the tracker.");
-  fromTracker("Notice Period/Offer status", ["notice", "offer"], "Notice period | offer & DOJ (LWD removed from the offer cell).");
+  fromTracker("Notice Period/Offer status", ["notice", "offer"], "Notice period, plus “| offer & DOJ” only when there is an offer (LWD removed from the offer cell).");
   fromTracker("Recruiter_Comments", ["comments"], "Copied from the tracker.");
 
   return out;
